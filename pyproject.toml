@@ -1,0 +1,62 @@
+[project]
+name = "BactFit"
+dynamic = ["version"]
+description = "Coordinate transformations for bacterial cell masks"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+  {name = "Piers Turner"},
+  {email = "piers.turner@physics.ox.ac.uk"},
+]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Framework :: napari",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+
+requires-python = ">=3.9"
+dependencies = [
+    "tifffile",
+    "numpy",
+    "opencv-python",
+    "matplotlib",
+    "scikit-image",
+    "scipy",
+    "shapely",
+    "tqdm",
+]
+
+[project.urls]
+"Source Code" = "https://github.com/piedrro/BactFit"
+
+[build-system]
+requires = ["setuptools>=42.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.dynamic]
+version = {attr = "bactfit.__init__.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["*.yaml","*.dll"]
+
+[tool.black]
+line-length = 79
+target-version = ['py39', 'py310']
+
+
