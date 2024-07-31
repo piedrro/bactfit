@@ -20,9 +20,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
 ]
-
 
 requires-python = ">=3.9"
 dependencies = [
@@ -34,6 +32,8 @@ dependencies = [
     "scipy",
     "shapely",
     "tqdm",
+    "picassosr",
+    "glob2",
 ]
 
 [project.urls]
@@ -53,10 +53,10 @@ version = {attr = "bactfit.__init__.__version__"}
 where = ["src"]
 
 [tool.setuptools.package-data]
-"*" = ["*.yaml","*.dll"]
+"*" = ["*.yaml","*.dll","*.tif","*.csv","*.png"]
 
 [tool.black]
 line-length = 79
-target-version = ['py39', 'py310']
+target-version = ['py39', 'py310', 'py311']
 
 

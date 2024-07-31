@@ -1,1 +1,14 @@
 /src/BactFit.egg-info/
+/src/bactfit/dev/
+/examples/bactfit_example_C1_S0_PhaseContrast_BacSeg.tif
+/examples/bactfit_example_C1_S1_PhaseContrast_BacSeg.tif
+/examples/bactfit_example_C1_S2_PhaseContrast_BacSeg.tif
+/examples/bactfit_example_C1_S3_PhaseContrast_BacSeg.tif
+/examples/bactfit_example_C1_S4_PhaseContrast_BacSeg.tif
+/examples/bactfit_example_C1_S5_PhaseContrast_BacSeg.tif
+/examples/bactfit_example_C1_S6_PhaseContrast_BacSeg.tif
+/examples/bactfit_example_C1_S7_PhaseContrast_BacSeg.tif
+/examples/bactfit_example_C1_S8_PhaseContrast_BacSeg.tif
+/examples/celllist.pickle
+/examples/celllist1.pickle
+/examples/celllistO.pickle
