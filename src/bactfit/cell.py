@@ -521,15 +521,15 @@ class CellList(object):
             n_optimised = 0
 
             if isinstance(jobs[0][0], Cell) and parallel is True:
-                executor = ProcessPoolExecutor()
                 n_cpus = os.cpu_count()
                 if isinstance(max_workers, int):
                     n_cpus = min(n_cpus, max_workers)
                 compute_jobs = np.array_split(jobs, n_cpus)
+                executor = ProcessPoolExecutor(max_workers=n_cpus)
             else:
-                executor = ThreadPoolExecutor()
                 n_cpus = 1
                 compute_jobs = [[job] for job in jobs]
+                executor = ThreadPoolExecutor(max_workers=n_cpus)
 
             print(f"Optimising {n_jobs} cells using {n_cpus} CPU(s) cores")
 
@@ -665,7 +665,7 @@ class CellList(object):
         return cells
 
     def add_localisations(self, locs, remove_outside = True, parallel=True,
-            silence_tqdm=False, progress_callback=None):
+            silence_tqdm=False, progress_callback=None, max_workers=None):
 
         if isinstance(locs, pd.DataFrame):
             locs = locs.to_records(index=False)
@@ -680,13 +680,15 @@ class CellList(object):
 
         n_jobs = len(jobs)
 
-        if parallel is True and len(jobs) > 100:
-            executor = ProcessPoolExecutor()
+        if parallel is True and len(jobs) > 1000:
             n_cpus = os.cpu_count()
+            if isinstance(max_workers, int):
+                n_cpus = min(n_cpus, max_workers)
+            executor = ProcessPoolExecutor(max_workers=n_cpus)
             compute_jobs = np.array_split(jobs, n_cpus)
         else:
-            executor = ThreadPoolExecutor()
             n_cpus = 1
+            executor = ThreadPoolExecutor(max_workers=n_cpus)
             compute_jobs = [[job] for job in jobs]
 
         print(f"Adding {len(locs)} localisations to {n_jobs} cells using {n_cpus} CPU(s) cores")
@@ -795,7 +797,8 @@ class CellList(object):
             return
 
     def transform_cells(self, target_cell=None, method = "angular",
-            shape_measurements=True, progress_callback=None, silence_tqdm=False):
+            shape_measurements=True, progress_callback=None,
+            silence_tqdm=False, max_workers=None):
 
         if target_cell is not None:
 
@@ -808,12 +811,14 @@ class CellList(object):
             n_transformed = 0
 
             if isinstance(jobs[0][0], Cell) and n_jobs > 1:
-                executor = ProcessPoolExecutor()
                 n_cpus = os.cpu_count()
+                if isinstance(max_workers, int):
+                    n_cpus = min(n_cpus, max_workers)
+                executor = ProcessPoolExecutor(max_workers=n_cpus)
                 compute_jobs = np.array_split(jobs, n_cpus)
             else:
-                executor = ThreadPoolExecutor()
                 n_cpus = 1
+                executor = ThreadPoolExecutor(max_workers=n_cpus)
                 compute_jobs = [[job] for job in jobs]
 
             print(f"Transforming localisations within {n_jobs} cells using {n_cpus} CPU(s) cores")
