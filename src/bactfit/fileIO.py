@@ -59,7 +59,7 @@ def write_cell(cell_group, cell):
 
     attr_grp = cell_group.create_group('attributes')
 
-    attribute_list = ["name","cell_width", "cell_length",
+    attribute_list = ["name","cell_radius", "cell_length",
                       "cell_midline", "cell_polygon",
                       "cell_poles", "polynomial_params",
                       "fit_error", "pixel_size", "locs",

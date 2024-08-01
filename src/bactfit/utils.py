@@ -167,7 +167,7 @@ def fit_poly(coords, degree=2, constrained=True, constraining_points=[],
     return fitted_poly, list(best_params)
 
 
-def manual_fit(cell_coords, midline_coords, width = None):
+def manual_fit(cell_coords, midline_coords, radius = None):
 
     cell_polygon = Polygon(cell_coords)
     cell_outline = LineString(cell_coords)
@@ -190,14 +190,14 @@ def manual_fit(cell_coords, midline_coords, width = None):
         degree=[1, 2, 3], maxiter=100, minimise_curvature=False,
         constraining_points=constraining_points, constrained=False)
 
-    if width is None:
+    if radius is None:
         centroid = cell_polygon.centroid
-        cell_width = cell_outline.distance(centroid)
+        cell_radius = cell_outline.distance(centroid)
     else:
-        cell_width = width
+        cell_radius = radius
 
     cell_midline = LineString(medial_axis_fit)
-    cell_polygon = cell_midline.buffer(cell_width)
+    cell_polygon = cell_midline.buffer(cell_radius)
 
     if vertical:
         cell_polygon = rotate_polygon(cell_polygon, angle=-90)
@@ -209,7 +209,7 @@ def manual_fit(cell_coords, midline_coords, width = None):
     cell_midline = resize_line(cell_midline, n_medial_points)
     midline_coords = np.array(cell_midline.coords)
 
-    return polygon_coords, midline_coords, poly_params, cell_width
+    return polygon_coords, midline_coords, poly_params, cell_radius
 
 def resize_polygon(self, polygon, n_points):
 

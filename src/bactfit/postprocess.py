@@ -10,7 +10,7 @@ import math
 from shapely.affinity import rotate, translate
 import cv2
 
-def find_centerline(midline, width, smooth=True):
+def find_centerline(midline, radius, smooth=True):
 
     centerline = None
 
@@ -60,7 +60,7 @@ def find_centerline(midline, width, smooth=True):
 
         start_points, end_points = extract_end_points(centerline)
 
-        extension_distance = width * 3
+        extension_distance = radius * 3
 
         extended_start = extend_away(start_points, extension_distance)
         extended_end = extend_away(end_points, extension_distance)
@@ -276,13 +276,13 @@ def plot_cell(polygon=None, locs=None, midline=None, title=None):
         print(traceback.format_exc())
         pass
 
-def perpendicular_bisector(segment, width):
+def perpendicular_bisector(segment, radius):
     mid_point = segment.interpolate(0.5, normalized=True)
     start, end = segment.coords
     dx, dy = end[0] - start[0], end[1] - start[1]
     bisector = LineString([(-dy, dx), (dy, -dx)])  # Create a perpendicular line
     bisector = translate(bisector, mid_point.x, mid_point.y)  # Translate to midpoint
-    scale_factor = width / bisector.length / 2  # Scale factor to get the desired length on each side
+    scale_factor = radius / bisector.length / 2  # Scale factor to get the desired length on each side
     bisector = LineString([mid_point, (mid_point.x - scale_factor * dy, mid_point.y + scale_factor * dx),
                            (mid_point.x + scale_factor * dy, mid_point.y - scale_factor * dx)])
     return bisector
@@ -332,13 +332,13 @@ def perpendicular_coordinate_transformation(cell, target_cell,
 
         source_polygon = cell.cell_polygon
         source_midline = cell.cell_midline
-        source_width = cell.width
+        source_radius = cell.cell_radius
 
         if cell.cell_centerline is None:
-            cell.cell_centerline = find_centerline(source_midline, source_width)
+            cell.cell_centerline = find_centerline(source_midline, source_radius)
             source_centerline = cell.cell_centerline
 
-        target_width = target_cell.width
+        target_radius = target_cell.cell_radius
         target_centerline = target_cell.cell_centerline
         target_polygon = target_cell.cell_polygon
 
@@ -373,7 +373,7 @@ def perpendicular_coordinate_transformation(cell, target_cell,
 
                 signed_distance = distance*distance_sign
                 # Compute the new distance in the target coordinate system
-                new_distance = target_width * (signed_distance / source_width)
+                new_distance = target_radius * (signed_distance / source_radius)
 
                 # Calculate the new coordinates by moving perpendicular to the target segment at the new distance
                 segment_start_target = np.array(target_segments[closest_segment_index].coords[0])
@@ -449,9 +449,9 @@ def angular_pixel_transformation(cell, target_cell, upscale = 2, n_segments=1000
             return None
         
         if cell.cell_midline == None:
-            midline, width = get_polygon_midline(cell.cell_polygon)
+            midline, radius = get_polygon_midline(cell.cell_polygon)
             cell.cell_midline = midline
-            cell.cell_width = width
+            cell.cell_radius = radius
             
         if cell.cell_midline == None:
             return None
@@ -462,8 +462,8 @@ def angular_pixel_transformation(cell, target_cell, upscale = 2, n_segments=1000
         source_midline = scale_midline(source_midline, upscale)
         source_centroid = source_midline.centroid
         
-        source_width = cell.cell_width
-        target_width = target_cell.cell_width
+        source_radius = cell.cell_radius
+        target_radius = target_cell.cell_radius
         target_image = target_cell.get_image()
 
 
@@ -520,10 +520,10 @@ def angular_pixel_transformation(cell, target_cell, upscale = 2, n_segments=1000
                     source_distance = point.distance(nearest_segment)
                     angle = calculate_angle2(nearest_segment, point, source_centroid)
                     
-                    if source_distance > source_width:
-                        source_distance = source_width
+                    if source_distance > source_radius:
+                        source_distance = source_radius
                         
-                    target_distance = target_width * (source_distance / source_width)
+                    target_distance = target_radius * (source_distance / source_radius)
                     
                     # Use the corresponding target segment
                     target_segment = target_segments[closest_segment_index]
@@ -575,7 +575,30 @@ def check_point_inside_polygon(polygon, point):
     else:
         return False
 
-        
+
+def plot_cell(cell):
+
+    try:
+
+        if cell.cell_polygon is not None:
+            polygon_coords = np.array(cell.cell_polygon.exterior.coords)
+            plt.plot(*polygon_coords.T, color='black')
+
+        if cell.cell_midline is not None:
+            midline_coords = np.array(cell.cell_midline.coords)
+            plt.plot(*midline_coords.T, color='blue')
+
+        if cell.locs is not None:
+            loc_coords = np.stack([cell.locs["x"], cell.locs["y"]], axis=1)
+            plt.scatter(*loc_coords.T, color='red', s=50)
+
+        plt.show()
+
+    except:
+        print(traceback.format_exc())
+        pass
+
+
 def angular_coordinate_transformation(cell, target_cell,
         n_segments=1000, shape_measurements=True, progress_list = []):
 
@@ -603,8 +626,8 @@ def angular_coordinate_transformation(cell, target_cell,
 
         source_centroid = source_midline.centroid
 
-        source_width = cell.cell_width
-        target_width = target_cell.cell_width
+        source_radius = cell.cell_radius
+        target_radius = target_cell.cell_radius
 
         target_midline = target_cell.cell_midline
         target_polygon = target_cell.cell_polygon
@@ -630,7 +653,7 @@ def angular_coordinate_transformation(cell, target_cell,
                 source_distance = point.distance(nearest_segment)
                 angle2 = calculate_angle2(nearest_segment, point, source_centroid)
 
-                target_distance = target_width * (source_distance / source_width)
+                target_distance = target_radius * (source_distance / source_radius)
                 
                 # Use the corresponding target segment
                 target_segment = target_segments[closest_segment_index]
@@ -654,13 +677,14 @@ def angular_coordinate_transformation(cell, target_cell,
                 print(traceback.format_exc())
                 pass
 
+        cell.cell_polygon = target_polygon
+        cell.cell_midline = target_midline
+
         if len(transformed_locs) > 0:
 
             transformed_locs = np.hstack(transformed_locs).view(np.recarray).copy()
 
             cell.locs = transformed_locs
-            cell.cell_polygon = target_polygon
-            cell.cell_midline = target_midline
 
             if shape_measurements:
                 cell = compute_shape_measurements(cell)

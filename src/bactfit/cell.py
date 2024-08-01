@@ -1,7 +1,7 @@
 import random
 import string
 import time
-
+import copy
 import numpy as np
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed, ProcessPoolExecutor
@@ -31,11 +31,11 @@ from picasso.render import render
 
 class ModelCell(object):
 
-    def __init__(self, length = 10, width = 5, margin = 1):
+    def __init__(self, length = 10, radius = 5, margin = 1):
         self.cell_polygon = None
         self.cell_midline = None
         self.cell_centerline = None
-        self.cell_width = width
+        self.cell_radius = radius
         self.cell_length = length
         self.margin = margin
 
@@ -43,19 +43,18 @@ class ModelCell(object):
 
     def create_model_cell(self):
 
-        x0 = y0 = self.cell_width + self.margin
+        x0 = y0 = self.cell_radius + self.margin
 
         # Define the coordinates of the line
         midline_x_coords = [x0, x0 + self.cell_length]
         midline_y_coords = [y0, y0]
         midline_coords = list(zip(midline_x_coords, midline_y_coords))
         self.cell_midline = LineString(midline_coords)
+        self.cell_polygon = self.cell_midline.buffer(self.cell_radius)
 
-        self.cell_polygon = self.cell_midline.buffer(self.cell_width)
-
-        y0 = self.cell_width + self.margin
+        y0 = self.cell_radius + self.margin
         x0 = self.margin
-        centerline_x_coords = [x0, x0 + self.cell_length + (self.cell_width * 2)]
+        centerline_x_coords = [x0, x0 + self.cell_length + (self.cell_radius * 2)]
         centerline_y_coords = [y0, y0]
         centerline_coords = list(zip(centerline_x_coords, centerline_y_coords))
         centerline_coords = np.array(centerline_coords)
@@ -65,8 +64,8 @@ class ModelCell(object):
 
     def get_image(self, dtype = np.uint16):
         
-        width = self.cell_length + ((self.cell_width+ self.margin) * 2)
-        height = self.cell_width*2 + (self.margin * 2)
+        width = self.cell_length + ((self.cell_radius+ self.margin) * 2)
+        height = self.cell_radius*2 + (self.margin * 2)
         
         image = np.zeros((height,width), dtype=np.uint16)
         
@@ -84,7 +83,7 @@ class Cell(object):
         self.cell_centre = None
         self.bbox = None
         self.height = None
-        self.cell_width = None
+        self.cell_radius = None
         self.vertical = None
         self.name = None
         self.transformed = False
@@ -106,8 +105,8 @@ class Cell(object):
             if type(cell_data) == dict:
 
                 for key in cell_data.keys():
-                    if key == "width":
-                        setattr(self, "cell_width", cell_data[key])
+                    if key == "radius":
+                        setattr(self, "cell_radius", cell_data[key])
                     elif key == "length":
                         setattr(self, "cell_length", cell_data[key])
                     else:
@@ -137,8 +136,8 @@ class Cell(object):
         if hasattr(self, "poly_params") and self.polynomial_params is None:
             self.polynomial_params = self.poly_params
 
-        if self.cell_midline is not None and self.cell_width is not None:
-            self.cell_polygon = self.cell_midline.buffer(self.cell_width)
+        if self.cell_midline is not None and self.cell_radius is not None:
+            self.cell_polygon = self.cell_midline.buffer(self.cell_radius)
 
         if self.vertical is None and self.cell_polygon is not None:
             self.vertical = get_vertical(self.cell_polygon)
@@ -200,6 +199,9 @@ class Cell(object):
 
         if locs is not None:
             self.locs = locs
+
+        if self.locs is None:
+            return None
 
         if len(self.locs) == 0:
             self.locs = None
@@ -565,7 +567,7 @@ class CellList(object):
         poly_params = []
         cell_poles = []
         midlines = []
-        cell_widths = []
+        cell_radiuss = []
         names = []
         frame_indices = []
 
@@ -575,7 +577,7 @@ class CellList(object):
                 try:
 
                     cell_polygon = cell.cell_polygon
-                    cell_width = cell.cell_width
+                    cell_radius = cell.cell_radius
                     cell_midline = cell.cell_midline
                     params = cell.polynomial_params
                     poles = cell.cell_poles
@@ -607,7 +609,7 @@ class CellList(object):
                         polygons.append(seg)
                         names.append(name)
                         midlines.append(midline)
-                        cell_widths.append(cell_width)
+                        cell_radiuss.append(cell_radius)
                         poly_params.append(params)
                         cell_poles.append(poles)
                         frame_indices.append(frame_index)
@@ -617,7 +619,7 @@ class CellList(object):
 
         data = {"polygons": polygons,
                 "midlines": midlines,
-                "widths": cell_widths,
+                "widths": cell_radiuss,
                 "names": names,
                 "poly_params": poly_params,
                 "cell_poles": cell_poles,
@@ -719,7 +721,7 @@ class CellList(object):
             n_jobs = len(jobs)
             n_transformed = 0
 
-            if isinstance(jobs[0][0], Cell):
+            if isinstance(jobs[0][0], Cell) and n_jobs > 1:
                 executor = ProcessPoolExecutor()
                 n_cpus = os.cpu_count()
                 compute_jobs = np.array_split(jobs, n_cpus)
@@ -763,16 +765,17 @@ class CellList(object):
                             print(f"Error: {e}")
                             traceback.print_exc()
 
-            if n_transformed == 0:
-                for cell in self.data:
-                    cell.locs = None
+            print(f"Transformed {n_transformed}/{n_jobs} cells")
 
-            else:
-                print(f"Transformed {n_transformed}/{n_jobs} cells")
+            for cell in self.data:
+                cell.cell_polygon = target_cell.cell_polygon
+                cell.cell_midline = target_cell.cell_midline
+                cell.cell_radius = target_cell.cell_radius
+                cell.remove_locs_outside_cell()
 
-                if len(self.data) > 0:
-                    self.assign_cell_indices(reindex=True)
-                    self.assign_cell_names()
+            if len(self.data) > 0:
+                self.assign_cell_indices(reindex=True)
+                self.assign_cell_names()
 
         return self
 
@@ -832,10 +835,10 @@ class CellList(object):
         for cell in self.data:
 
             try:
-                width = cell.cell_width
+                radius = cell.cell_radius
                 cell_midline = cell.cell_midline
                 midline_length = cell_midline.length
-                length = midline_length + (width * 2)
+                length = midline_length + (radius * 2)
                 pixel_size_nm = cell.pixel_size
                 length_um = length * pixel_size_nm / 1000
                 cell.cell_length_um = length_um
@@ -1114,6 +1117,33 @@ class CellList(object):
         except:
             print(traceback.format_exc())
             return None
+
+    def plot_cells(self,xlim=None,ylim=None,locs=True):
+
+        try:
+
+            for cell in copy.deepcopy(self.data):
+
+                polygon = cell.cell_polygon
+                polygon_coords = np.array(polygon.exterior.coords)
+
+                plt.plot(*polygon_coords.T, color="black")
+
+                if locs:
+                    if cell.locs is not None:
+                        plt.scatter(cell.locs["x"], cell.locs["y"], color="blue")
+
+            if xlim is not None:
+                plt.xlim(xlim)
+            if ylim is not None:
+                plt.ylim(ylim)
+
+            plt.show()
+
+
+        except:
+            print(traceback.format_exc())
+            pass
 
 
 

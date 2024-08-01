@@ -152,7 +152,7 @@ class BactFit(object):
 
         x_min = params[0]
         x_max = params[1]
-        cell_width = params[2]
+        cell_radius = params[2]
         x_offset = params[3]
         y_offset = params[4]
         angle = params[5]
@@ -172,7 +172,7 @@ class BactFit(object):
         midline_coords = np.array(midline.coords)
         cell_poles = [midline_coords[0], midline_coords[-1]]
 
-        fitted_polygon = midline.buffer(cell_width)
+        fitted_polygon = midline.buffer(cell_radius)
 
         distance = BactFit.compute_bacfit_distance(fitted_polygon, cell_polygon, fit_mode)
 
@@ -181,7 +181,7 @@ class BactFit(object):
         cell.cell_poles = cell_poles
         cell.polynomial_params = poly_params
         cell.fit_error = distance
-        cell.cell_width = cell_width
+        cell.cell_radius = cell_radius
         
         return cell
 
@@ -199,7 +199,7 @@ class BactFit(object):
 
             x_min = params[0]
             x_max = params[1]
-            cell_width = params[2]
+            cell_radius = params[2]
             x_offset = params[3]
             y_offset = params[4]
             angle = params[5]
@@ -216,7 +216,7 @@ class BactFit(object):
             midline = LineString(midline_coords)
             midline = rotate_linestring(midline, angle=angle)
 
-            midline_buffer = midline.buffer(cell_width)
+            midline_buffer = midline.buffer(cell_radius)
 
             distance = BactFit.compute_bacfit_distance(midline_buffer,
                 cell_polygon, fit_mode)
