@@ -209,6 +209,10 @@ class Cell(object):
     def remove_locs_outside_cell(self, locs=None):
 
         if locs is not None:
+
+            if isinstance(locs, pd.DataFrame):
+                locs = locs.to_records(index=False)
+
             self.locs = locs
 
         if self.locs is None:
@@ -643,7 +647,25 @@ class CellList(object):
 
         return data
 
-    def add_localisations(self, locs, remove_outside = True):
+    @staticmethod
+    def add_localisation_task(cells, locs, remove_outside, progress_list):
+
+        try:
+
+            for cell in cells:
+                cell.locs = locs
+
+                if remove_outside is True:
+                    cell.remove_locs_outside_cell()
+
+        except:
+            print(traceback.format_exc())
+            pass
+
+        return cells
+
+    def add_localisations(self, locs, remove_outside = True, parallel=True,
+            silence_tqdm=False, progress_callback=None):
 
         if isinstance(locs, pd.DataFrame):
             locs = locs.to_records(index=False)
@@ -654,13 +676,62 @@ class CellList(object):
 
         locs = np.unique(locs)
 
-        for cell_index, cell in enumerate(self.data):
-            cell.locs = locs
+        jobs = [cell for cell in self.data]
 
-            if remove_outside:
-                cell.remove_locs_outside_cell()
+        n_jobs = len(jobs)
 
-        n_locs = len(self.get_locs())
+        if parallel is True and len(jobs) > 100:
+            executor = ProcessPoolExecutor()
+            n_cpus = os.cpu_count()
+            compute_jobs = np.array_split(jobs, n_cpus)
+        else:
+            executor = ThreadPoolExecutor()
+            n_cpus = 1
+            compute_jobs = [[job] for job in jobs]
+
+        print(f"Adding {len(locs)} localisations to {n_jobs} cells using {n_cpus} CPU(s) cores")
+
+        with Manager() as manager:
+
+            progress_list = manager.list()
+
+            with executor:
+
+                futures = [executor.submit(CellList.add_localisation_task,
+                    job, locs, remove_outside, progress_list) for job in compute_jobs]
+
+                self.compute_progress(futures, n_jobs, progress_list, progress_callback,
+                    silence_tqdm=silence_tqdm, tqdm_dec="Adding Localisations")
+
+                for future in as_completed(futures):
+                    try:
+                        results = future.result()
+
+                        if results is not None:
+                            if len(results) > 0:
+                                for cell in results:
+                                    cell_index = cell.cell_index
+                                    locs = cell.locs
+
+                                    if type(locs) == np.recarray:
+                                        self.data[cell_index] = cell
+                                    else:
+                                        self.data[cell_index].locs = None
+
+                    except Exception as e:
+                        print(f"Error: {e}")
+                        traceback.print_exc()
+
+        locs = self.get_locs()
+
+        if locs is None:
+            print(f"Added 0 localisations to CellList")
+
+        if len(locs) > 0:
+            n_locs = len(locs)
+        else:
+            n_locs = 0
+
         print(f"Added {n_locs} localisations to CellList")
 
     @staticmethod
