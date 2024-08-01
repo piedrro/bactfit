@@ -34,7 +34,7 @@ import warnings
 
 from bactfit.utils import (resize_line, moving_average, rotate_polygon, rotate_linestring, fit_poly)
 
-class BactFit(object):
+class bactfit(object):
 
     def __init__(self,
             cell = None,
@@ -68,7 +68,7 @@ class BactFit(object):
 
         if self.cell is not None:
 
-            fitted_cell = BactFit.fit_cell(
+            fitted_cell = bactfit.fit_cell(
                 self.cell,
                 refine_fit=self.refine_fit,
                 fit_mode=self.fit_mode,
@@ -81,7 +81,7 @@ class BactFit(object):
 
         if self.celllist is not None:
 
-            fitted_cells = BactFit.fit_celllist(
+            fitted_cells = bactfit.fit_celllist(
                 self.celllist,
                 refine_fit=self.refine_fit,
                 fit_mode=self.fit_mode,
@@ -174,7 +174,7 @@ class BactFit(object):
 
         fitted_polygon = midline.buffer(cell_radius)
 
-        distance = BactFit.compute_bacfit_distance(fitted_polygon, cell_polygon, fit_mode)
+        distance = bactfit.compute_bacfit_distance(fitted_polygon, cell_polygon, fit_mode)
 
         cell.cell_midline = midline
         cell.cell_polygon = fitted_polygon
@@ -218,7 +218,7 @@ class BactFit(object):
 
             midline_buffer = midline.buffer(cell_radius)
 
-            distance = BactFit.compute_bacfit_distance(midline_buffer,
+            distance = bactfit.compute_bacfit_distance(midline_buffer,
                 cell_polygon, fit_mode)
 
         except:
@@ -304,7 +304,7 @@ class BactFit(object):
             if vertical:
                 cell_polygon = rotate_polygon(cell_polygon)
 
-            medial_axis_coords, radius = BactFit.get_polygon_medial_axis(cell_polygon)
+            medial_axis_coords, radius = bactfit.get_polygon_medial_axis(cell_polygon)
 
             if min_radius > 0:
                 radius = max(radius, min_radius)
@@ -337,16 +337,16 @@ class BactFit(object):
                 if max_radius > 0:
                     bounds[2] = (None, max_radius)
 
-                result = minimize(BactFit.refine_function, params,
+                result = minimize(bactfit.refine_function, params,
                     args=(cell_polygon, poly_params, fit_mode),
                     tol=1e-1, options={'maxiter': 500}, bounds=bounds)
 
                 params = result.x
 
-            cell = BactFit.bactfit_result(cell, params, cell_polygon,
+            cell = bactfit.bactfit_result(cell, params, cell_polygon,
                 poly_params, fit_mode)
 
-            cell = BactFit.register_fit_data(cell, vertical=vertical)
+            cell = bactfit.register_fit_data(cell, vertical=vertical)
 
             if max_error > 0 and hasattr(cell, "fit_error"):
                 if cell.fit_error > max_error:
@@ -371,7 +371,7 @@ class BactFit(object):
 
             with ProcessPoolExecutor(max_workers=max_workers) as executor:
 
-                futures = {executor.submit(BactFit.fit_cell, cell, refine_fit=refine_fit,
+                futures = {executor.submit(bactfit.fit_cell, cell, refine_fit=refine_fit,
                     fit_mode=fit_mode, min_radius=min_radius, max_radius=max_radius, max_error=max_error): cell
                     for cell in celllist.data}
 
@@ -397,7 +397,7 @@ class BactFit(object):
             for cell in tqdm(celllist, total=num_cells,
                     desc="Optimising Cells", disable=silence_tqdm):
 
-                cell = BactFit.fit_cell(cell, refine_fit=refine_fit,
+                cell = bactfit.fit_cell(cell, refine_fit=refine_fit,
                     fit_mode=fit_mode, min_radius=min_radius,
                     max_radius=max_radius)
 

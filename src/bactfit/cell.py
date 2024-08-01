@@ -19,7 +19,7 @@ from picasso.render import render
 import warnings
 from shapely.affinity import translate
 
-from bactfit.fit import BactFit
+from bactfit.fit import bactfit
 from bactfit.postprocess import (cell_coordinate_transformation,
     reflect_loc_horizontally, reflect_loc_vertically)
 from bactfit.utils import resize_line, get_vertical
@@ -270,7 +270,7 @@ class Cell(object):
             min_radius = -1, max_radius = -1, max_error = 5, **kwargs):
 
         try:
-            bf = BactFit(cell=self, refine_fit=refine_fit, fit_mode=fit_mode,
+            bf = bactfit(cell=self, refine_fit=refine_fit, fit_mode=fit_mode,
                 min_radius=min_radius, max_radius=max_radius, max_error=max_error, **kwargs)
 
             self = bf.fit()
