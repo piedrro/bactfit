@@ -680,7 +680,7 @@ class CellList(object):
 
         n_jobs = len(jobs)
 
-        if parallel is True and len(jobs) > 10:
+        if parallel is True and len(jobs) > 5:
             n_cpus = os.cpu_count()
             if isinstance(max_workers, int):
                 n_cpus = min(n_cpus, max_workers)
