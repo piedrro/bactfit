@@ -1002,12 +1002,18 @@ class CellList(object):
             from mpl_toolkits.axes_grid1 import make_axes_locatable
             divider = make_axes_locatable(ax)
             cax = divider.append_axes("right", size="2%", pad=0.05)
-            plt.colorbar(im, cax=cax)
+            cbar = plt.colorbar(im, cax=cax)
+
+            # Set the face color of the colorbar to black and the tick color to white
             cax.set_facecolor('black')
+            cbar.ax.yaxis.set_tick_params(color='white')
+            cbar.outline.set_edgecolor('white')
+            plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='white')
 
             buf = BytesIO()
-            plt.savefig(buf, format='png', bbox_inches='tight',
-                pad_inches=0, facecolor='black', dpi=dpi)
+            plt.savefig(buf, format='png',
+                bbox_inches='tight', pad_inches=0.1,
+                facecolor='black', dpi=dpi)
             buf.seek(0)
             heatmap = plt.imread(buf)
 
@@ -1111,8 +1117,9 @@ class CellList(object):
             ax.axis('off')
 
             buf = BytesIO()
-            plt.savefig(buf, format='png', bbox_inches='tight',
-                pad_inches=0, facecolor='black', dpi=dpi)
+            plt.savefig(buf, format='png',
+                bbox_inches='tight',pad_inches=0,
+                facecolor='black', dpi=dpi)
             buf.seek(0)
             image = plt.imread(buf)
             plt.close(fig)
