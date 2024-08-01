@@ -29,9 +29,16 @@ from matplotlib.colors import ListedColormap
 from io import BytesIO
 from picasso.render import render
 
+
+
 class ModelCell(object):
 
     def __init__(self, length = 10, radius = 5, margin = 1):
+
+        from bactfit.__init__ import __version__ as bactfit_version
+        self.bactfit_version = bactfit_version
+        self.type = "ModelCell"
+
         self.cell_polygon = None
         self.cell_midline = None
         self.cell_centerline = None
@@ -78,6 +85,10 @@ class ModelCell(object):
 class Cell(object):
 
     def __init__(self, cell_data = None):
+
+        from bactfit.__init__ import __version__ as bactfit_version
+        self.bactfit_version = bactfit_version
+        self.type = "Cell"
 
         self.cell_polygon = None
         self.cell_centre = None
@@ -237,7 +248,7 @@ class Cell(object):
         else:
             self.locs = None
 
-    def transform_locs(self, target_cell=None, locs=None,
+    def transform_cells(self, target_cell=None, locs=None,
             method = "angular", shape_measurements=True):
 
         if locs is not None:
@@ -419,6 +430,10 @@ class Cell(object):
 class CellList(object):
 
     def __init__(self, cell_list, verbose=False):
+
+        from bactfit.__init__ import __version__ as bactfit_version
+        self.bactfit_version = bactfit_version
+        self.type = "CellList"
 
         if isinstance(cell_list[0], Cell):
             self.data = cell_list
@@ -708,7 +723,7 @@ class CellList(object):
             print(traceback.format_exc())
             return
 
-    def transform_locs(self, target_cell=None, method = "angular",
+    def transform_cells(self, target_cell=None, method = "angular",
             shape_measurements=True, progress_callback=None, silence_tqdm=False):
 
         if target_cell is not None:
@@ -741,7 +756,7 @@ class CellList(object):
                     futures = [executor.submit(CellList.compute_transforms, job, progress_list) for job in compute_jobs]
 
                     self.compute_progress(futures, n_jobs, progress_list, progress_callback,
-                        silence_tqdm=silence_tqdm, tqdm_dec="Transforming Localisations")
+                        silence_tqdm=silence_tqdm, tqdm_dec="Transforming Cells")
 
                     for future in as_completed(futures):
 
@@ -955,6 +970,9 @@ class CellList(object):
 
             locs = self.get_locs(symmetry=symmetry, transformed=True)
 
+            if locs is None:
+                return None
+
             if len(locs) == 0:
                 return None
 
@@ -1032,6 +1050,9 @@ class CellList(object):
                 return None
 
             locs = self.get_locs(symmetry=symmetry, transformed=True)
+
+            if locs is None:
+                return None
 
             if len(locs) == 0:
                 return None
@@ -1130,8 +1151,11 @@ class CellList(object):
                 plt.plot(*polygon_coords.T, color="black")
 
                 if locs:
-                    if cell.locs is not None:
-                        plt.scatter(cell.locs["x"], cell.locs["y"], color="blue")
+                    if cell.locs is None:
+                        continue
+                    if len(cell.locs) == 0:
+                        continue
+                    plt.scatter(cell.locs["x"], cell.locs["y"], color="blue")
 
             if xlim is not None:
                 plt.xlim(xlim)

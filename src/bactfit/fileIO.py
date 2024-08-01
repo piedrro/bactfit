@@ -20,7 +20,7 @@ def save(file_path, cell_data):
         file, ext = os.path.splitext(file_path)
         file_path = file + ".h5"
 
-        if isinstance(cell_data, Cell):
+        if cell_data.type == 'Cell':
 
             with h5py.File(file_path, 'w') as f:
                 if hasattr(cell_data, 'cell_index'):
@@ -33,7 +33,7 @@ def save(file_path, cell_data):
 
             print(f"Saved cell to {file_path}")
 
-        elif isinstance(cell_data, CellList):
+        elif cell_data.type == 'CellList':
 
             with h5py.File(file_path, 'w') as f:
                 n_cells = len(cell_data.data)
@@ -63,19 +63,22 @@ def write_cell(cell_group, cell):
                       "cell_midline", "cell_polygon",
                       "cell_poles", "polynomial_params",
                       "fit_error", "pixel_size", "locs",
-                      "cell_index", "vertical",'crop_bounds']
+                      "cell_index", "vertical",'crop_bounds',
+                      'cell_centre', 'bbox', 'height', 'width',
+                      'transformed', "bactfit_version","type"]
 
     for attr in attribute_list:
         if hasattr(cell, attr):
             attr_data = cell.__getattribute__(attr)
             if attr_data is not None:
                 try:
-                    if isinstance(attr_data, (Polygon, LineString)):
+                    if isinstance(attr_data, (Polygon, LineString,np.ndarray, np.recarray)):
                         # Serialize geometric objects
                         attr_data = pickle.dumps(attr_data)
-                    elif not isinstance(attr_data, (int, float, str, np.ndarray)):
+                    elif not isinstance(attr_data, (int, float, str)):
                         # Serialize other complex objects
                         attr_data = pickle.dumps(attr_data)
+
                     if isinstance(attr_data, bytes):
                         attr_grp.create_dataset(attr, data=np.void(attr_data))
                     else:
