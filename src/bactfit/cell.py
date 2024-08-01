@@ -582,7 +582,7 @@ class CellList(object):
         poly_params = []
         cell_poles = []
         midlines = []
-        cell_radiuss = []
+        cell_radii = []
         names = []
         frame_indices = []
 
@@ -624,7 +624,7 @@ class CellList(object):
                         polygons.append(seg)
                         names.append(name)
                         midlines.append(midline)
-                        cell_radiuss.append(cell_radius)
+                        cell_radii.append(cell_radius)
                         poly_params.append(params)
                         cell_poles.append(poles)
                         frame_indices.append(frame_index)
@@ -634,7 +634,7 @@ class CellList(object):
 
         data = {"polygons": polygons,
                 "midlines": midlines,
-                "widths": cell_radiuss,
+                "cell_radii": cell_radii,
                 "names": names,
                 "poly_params": poly_params,
                 "cell_poles": cell_poles,
