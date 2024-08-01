@@ -1,5 +1,9 @@
 ## BactFit
 
+[![License BSD-3](https://img.shields.io/pypi/l/napari-moltrack.svg?color=green)](https://github.com/piedrro/bactfit/raw/main/LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/bactfit.svg?color=green)](https://pypi.org/project/bactfit)
+[![Python Version](https://img.shields.io/pypi/pyversions/bactfit.svg?color=green)](https://python.org)
+
 A package for fitting the shape of rod shaped bacterial cells to an ideal cell model. 
 This is an analogue of colicoords, but using allowing cells to have multiple bends as the cell midline can be an N degree polynomial.
 
@@ -16,13 +20,18 @@ Author: Piers Turner, Kapanidis Group, University of Oxford.
 
 ## Installation
 
+Create new conda environment (or venv) and activate it:
+
+    conda create -name bactfit python=3.9
+    conda activate bactfit
+
 You can install `BactFit` via [pip]:
 
-    pip install BactFit
+    pip install bactfit
 
 To update `BactFit` to the latest version, use:
 
-    pip install BactFit --upgrade
+    pip install bactfit --upgrade
 
 To install latest development version from [GitHub]:
 
