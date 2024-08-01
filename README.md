@@ -1,6 +1,6 @@
 ## BactFit
 
-[![License BSD-3](https://img.shields.io/pypi/l/napari-moltrack.svg?color=green)](https://github.com/piedrro/bactfit/raw/main/LICENSE)
+[![License BSD-3](https://img.shields.io/pypi/l/bactfit.svg?color=green)](https://github.com/piedrro/bactfit/raw/main/LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/bactfit.svg?color=green)](https://pypi.org/project/bactfit)
 [![Python Version](https://img.shields.io/pypi/pyversions/bactfit.svg?color=green)](https://python.org)
 
