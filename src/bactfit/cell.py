@@ -966,8 +966,9 @@ class CellList(object):
     def plot_heatmap(self, symmetry=False, bins=20, cmap="jet",
             draw_outline=True, show=True, save=False, path=None,dpi=500):
 
-        try:
+        heatmap = None
 
+        try:
             locs = self.get_locs(symmetry=symmetry, transformed=True)
 
             if locs is None:
@@ -1041,10 +1042,14 @@ class CellList(object):
             print(traceback.format_exc())
             pass
 
+        return heatmap
+
     def plot_render(self, symmetry=False, oversampling=10, pixel_size=1,
             blur_method="One-Pixel-Blur", min_blur_width=0.2,
             show=True, save=False, path=None, dpi=500,
             cmap="jet", draw_outline=True):
+
+        image = None
 
         try:
 
@@ -1145,6 +1150,8 @@ class CellList(object):
         except:
             print(traceback.format_exc())
             return None
+
+        return image
 
     def plot_cells(self,xlim=None,ylim=None,locs=True):
 
